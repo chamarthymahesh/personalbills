@@ -7,11 +7,9 @@ services:
       dockerfile: Dockerfile.client
     ports:
       - "9000:80"
+    depends_on:
+      - server
     restart: unless-stopped
-    # Uncomment the following lines for development with live reload
-    # volumes:
-    #   - ./client:/app
-    #   - /app/node_modules
 
   server:
     build:
@@ -19,11 +17,9 @@ services:
       dockerfile: Dockerfile.server
     ports:
       - "9001:9001"
+    env_file:
+      - ./server/.env
     restart: unless-stopped
-    # Uncomment for development
-    # volumes:
-    #   - ./server:/app
-    #   - /app/node_modules
 
 networks:
   default:

@@ -601,15 +601,21 @@ app.delete('/api/rentals/:id', async (req, res) => {
   }
 });
 
-// Start Server
+// Auth Login
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password required' });
   }
-  // NOTE: In production, verify credentials against a user database and hash passwords.
-  // Here we issue a dummy token (base64 of email) for demo purposes.
-  const token = Buffer.from(email).toString('base64');
+
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  if (email !== adminEmail || password !== adminPassword) {
+    return res.status(401).json({ error: 'Invalid email or password' });
+  }
+
+  const token = Buffer.from(JSON.stringify({ email, role: 'admin', ts: Date.now() })).toString('base64');
   res.json({ token });
 });
 
