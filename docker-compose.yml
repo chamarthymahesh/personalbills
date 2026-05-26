@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile.client
     ports:
-      - "80:80"
+      - "9000:80"
     restart: unless-stopped
     # Uncomment the following lines for development with live reload
     # volumes:
