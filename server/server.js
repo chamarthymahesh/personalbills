@@ -61,8 +61,21 @@ app.get('/api/dashboard/summary', async (req, res) => {
   try {
     // 1. Bills
     const bills = await UtilityBill.find();
-    const pendingBillsCount = bills.filter(b => b.status === 'pending').length;
-    const pendingBillsAmount = bills.filter(b => b.status === 'pending').reduce((sum, b) => sum + b.amount, 0);
+    
+    // Calculate current month's bills paid
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1; // 1-12
+    let currentMonthBillsPaid = 0;
+    
+    bills.forEach(b => {
+      const pay = b.payments?.find(p => p.year === currentYear && p.month === currentMonth);
+      if (pay) {
+        currentMonthBillsPaid += pay.amount;
+      }
+    });
+
+    const pendingBillsCount = 0; // Deprecated with new schema, could determine based on expected vs paid
+    const pendingBillsAmount = 0; // Deprecated
 
     // 2. Insurances
     const insurances = await Insurance.find();
@@ -132,15 +145,20 @@ app.get('/api/dashboard/summary', async (req, res) => {
     const feed = [];
     
     // Add bills payments
-    bills.filter(b => b.status === 'paid').forEach(b => {
-      feed.push({
-        date: b.paidDate || b.updatedAt,
-        type: 'Bill Payment',
-        title: `Paid bill: ${b.name} (${b.type})`,
-        amount: -b.amount,
-        color: '#f87171'
-      });
+    bills.forEach(b => {
+      if (b.payments) {
+        b.payments.forEach(p => {
+          feed.push({
+            date: p.datePaid,
+            type: 'Bill Payment',
+            title: `Paid bill: ${b.name} (${b.type})`,
+            amount: -p.amount,
+            color: '#f87171'
+          });
+        });
+      }
     });
+
 
     // Add insurance payments
     insurances.forEach(i => {
@@ -266,7 +284,7 @@ app.get('/api/dropdowns', async (req, res) => {
 // Utility Bills Routes
 app.get('/api/bills', async (req, res) => {
   try {
-    const bills = await UtilityBill.find().sort({ dueDate: 1 });
+    const bills = await UtilityBill.find().sort({ name: 1 });
     res.json(bills);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -287,6 +305,19 @@ app.put('/api/bills/:id', async (req, res) => {
   try {
     const updated = await UtilityBill.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.json(updated);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/bills/:id/payments', async (req, res) => {
+  try {
+    const bill = await UtilityBill.findById(req.params.id);
+    if (!bill) return res.status(404).json({ error: 'Bill connection not found' });
+    
+    bill.payments.push(req.body);
+    await bill.save();
+    res.json(bill);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

@@ -1,15 +1,21 @@
 import mongoose from 'mongoose';
 
 // 1. Utility Bills Model
+const BillPaymentSchema = new mongoose.Schema({
+  datePaid: { type: Date, required: true, default: Date.now },
+  amount: { type: Number, required: true },
+  month: { type: Number, required: true }, // 1 to 12
+  year: { type: Number, required: true },
+  notes: { type: String }
+});
+
 const UtilityBillSchema = new mongoose.Schema({
   type: { type: String, required: true, enum: ['electricity', 'water', 'internet', 'phone', 'other'] },
   name: { type: String, required: true },
   serviceNo: { type: String }, // NEW: Added service connection number
-  amount: { type: Number, required: true },
-  dueDate: { type: Date, required: true },
-  status: { type: String, required: true, enum: ['paid', 'pending'], default: 'pending' },
-  paidDate: { type: Date },
-  notes: { type: String }
+  status: { type: String, required: true, enum: ['active', 'inactive'], default: 'active' },
+  notes: { type: String },
+  payments: [BillPaymentSchema]
 }, { timestamps: true });
 
 // 2. Insurance Model
