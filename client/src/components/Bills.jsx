@@ -225,7 +225,25 @@ export default function Bills() {
               <div className="form-group" style={{ display: 'flex', gap: '1rem' }}>
                 <div style={{ flex: 1 }}>
                   <label className="form-label">Month</label>
-                  <input type="number" min="1" max="12" className="form-control" required value={paymentFormData.month} onChange={e => setPaymentFormData({...paymentFormData, month: parseInt(e.target.value)})} />
+                  <select 
+                    className="form-control" 
+                    required 
+                    value={paymentFormData.month} 
+                    onChange={e => setPaymentFormData({...paymentFormData, month: parseInt(e.target.value)})}
+                  >
+                    <option value="1">January (1)</option>
+                    <option value="2">February (2)</option>
+                    <option value="3">March (3)</option>
+                    <option value="4">April (4)</option>
+                    <option value="5">May (5)</option>
+                    <option value="6">June (6)</option>
+                    <option value="7">July (7)</option>
+                    <option value="8">August (8)</option>
+                    <option value="9">September (9)</option>
+                    <option value="10">October (10)</option>
+                    <option value="11">November (11)</option>
+                    <option value="12">December (12)</option>
+                  </select>
                 </div>
                 <div style={{ flex: 1 }}>
                   <label className="form-label">Year</label>
