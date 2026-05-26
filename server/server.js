@@ -131,8 +131,6 @@ app.get('/api/dashboard/summary', async (req, res) => {
     const totalMonthlyRentExpectation = rentals.reduce((sum, r) => sum + r.monthlyRent, 0);
     
     // Calculate current month's received rent
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth() + 1; // 1-12
     let currentMonthRentReceived = 0;
     rentals.forEach(r => {
       const pay = r.payments.find(p => p.year === currentYear && p.month === currentMonth);
