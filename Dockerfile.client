@@ -1,0 +1,20 @@
+FROM node:18-alpine AS builder
+
+# Set working directory for the client
+WORKDIR /app
+
+# Install dependencies (including Vite)
+COPY client/package.json client/package-lock.json ./
+RUN npm ci
+
+# Copy client source code and build
+COPY client/ ./
+RUN npm run build
+
+# Use nginx to serve the built files
+FROM nginx:alpine
+COPY --from=builder /app/dist /usr/share/nginx/html
+# Expose the default nginx port
+EXPOSE 80
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]
