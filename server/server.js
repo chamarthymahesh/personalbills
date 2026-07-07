@@ -323,6 +323,35 @@ app.post('/api/bills/:id/payments', async (req, res) => {
   }
 });
 
+// Update a specific payment on a bill (edit amount, date, notes)
+app.put('/api/bills/:id/payments/:paymentId', async (req, res) => {
+  try {
+    const bill = await UtilityBill.findById(req.params.id);
+    if (!bill) return res.status(404).json({ error: 'Bill connection not found' });
+    const payment = bill.payments.id(req.params.paymentId);
+    if (!payment) return res.status(404).json({ error: 'Payment not found' });
+    
+    Object.assign(payment, req.body);
+    await bill.save();
+    res.json(bill);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Delete a specific payment from a bill
+app.delete('/api/bills/:id/payments/:paymentId', async (req, res) => {
+  try {
+    const bill = await UtilityBill.findById(req.params.id);
+    if (!bill) return res.status(404).json({ error: 'Bill connection not found' });
+    bill.payments.pull({ _id: req.params.paymentId });
+    await bill.save();
+    res.json(bill);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.delete('/api/bills/:id', async (req, res) => {
   try {
     await UtilityBill.findByIdAndDelete(req.params.id);
