@@ -5,6 +5,8 @@ export default function Insurances() {
   const [policies, setPolicies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedPolicyId, setSelectedPolicyId] = useState(null);
   const [dropdowns, setDropdowns] = useState({ cars: [], insurances: [], projects: [], rentals: [], contacts: [] });
 
   // Form State
@@ -13,10 +15,18 @@ export default function Insurances() {
     provider: 'Tata AIG',
     policyName: '',
     policyNumber: '',
+    startDate: '',
+    endDate: '',
     premiumAmount: '',
     frequency: 'yearly',
     dueDate: '',
     carName: '',
+    notes: ''
+  });
+
+  const [paymentFormData, setPaymentFormData] = useState({
+    amount: '',
+    date: new Date().toISOString().split('T')[0],
     notes: ''
   });
 
@@ -66,6 +76,8 @@ export default function Insurances() {
           provider: 'Tata AIG',
           policyName: '',
           policyNumber: '',
+          startDate: '',
+          endDate: '',
           premiumAmount: '',
           frequency: 'yearly',
           dueDate: '',
@@ -92,6 +104,31 @@ export default function Insurances() {
     fetch(`/api/insurances/${id}`, { method: 'DELETE' })
       .then(() => fetchPolicies())
       .catch(err => console.error('Error deleting policy:', err));
+  };
+
+  const handlePaymentSubmit = (e) => {
+    e.preventDefault();
+    if (!paymentFormData.amount || !paymentFormData.date) {
+      alert('Please fill out amount and date.');
+      return;
+    }
+    
+    fetch(`/api/insurances/${selectedPolicyId}/payments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(paymentFormData)
+    })
+      .then(res => res.json())
+      .then(() => {
+        setIsPaymentModalOpen(false);
+        setPaymentFormData({
+          amount: '',
+          date: new Date().toISOString().split('T')[0],
+          notes: ''
+        });
+        fetchPolicies();
+      })
+      .catch(err => console.error('Error recording payment:', err));
   };
 
   const getPolicyIcon = (type) => {
@@ -197,6 +234,18 @@ export default function Insurances() {
                     <span style={{ color: 'var(--text-secondary)' }}>Premium:</span>
                     <span style={{ color: 'var(--color-success)', fontWeight: 600 }}>{formatCurrency(p.premiumAmount)} / <span style={{ textTransform: 'capitalize', fontSize: '0.8rem' }}>{p.frequency}</span></span>
                   </div>
+                  {p.startDate && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Start Date:</span>
+                      <span style={{ color: 'white' }}>{new Date(p.startDate).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</span>
+                    </div>
+                  )}
+                  {p.endDate && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Expiry Date:</span>
+                      <span style={{ color: 'white' }}>{new Date(p.endDate).toLocaleDateString('en-IN', { dateStyle: 'medium' })}</span>
+                    </div>
+                  )}
                   {p.carName && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
                       <span style={{ color: 'var(--text-secondary)' }}>Linked Vehicle:</span>
@@ -204,12 +253,24 @@ export default function Insurances() {
                     </div>
                   )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>Renewal Due:</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>Next Payment Due:</span>
                     <span style={{ color: daysLeft <= 15 && p.status === 'active' ? 'var(--color-danger)' : 'white' }}>
                       {new Date(p.dueDate).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
                     </span>
                   </div>
                 </div>
+
+                {p.payments && p.payments.length > 0 && (
+                  <div style={{ marginBottom: '1rem', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '6px' }}>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', fontWeight: 600 }}>Recent Payments</p>
+                    {p.payments.slice(-3).map((pay, i) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'white', marginBottom: '0.25rem' }}>
+                        <span>{new Date(pay.date).toLocaleDateString('en-IN')}</span>
+                        <span style={{ color: 'var(--color-success)' }}>{formatCurrency(pay.amount)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {p.status === 'active' && daysLeft > 0 && daysLeft <= 30 && (
                   <div style={{ 
@@ -234,7 +295,14 @@ export default function Insurances() {
                   </div>
                 )}
 
-                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                  <button className="btn btn-primary" style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }} onClick={() => {
+                    setSelectedPolicyId(p._id);
+                    setPaymentFormData({ ...paymentFormData, amount: p.premiumAmount });
+                    setIsPaymentModalOpen(true);
+                  }}>
+                    Record Payment
+                  </button>
                   {p.status === 'active' ? (
                     <button className="btn btn-secondary" style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }} onClick={() => handleUpdateStatus(p._id, 'expired')}>
                       Set Expired
@@ -301,6 +369,27 @@ export default function Insurances() {
                 />
               </div>
 
+              <div className="form-group" style={{ display: 'flex', gap: '1rem' }}>
+                <div style={{ flex: 1 }}>
+                  <label className="form-label">Policy Start Date</label>
+                  <input 
+                    type="date" 
+                    className="form-control" 
+                    value={formData.startDate} 
+                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label className="form-label">Policy Expiry Date</label>
+                  <input 
+                    type="date" 
+                    className="form-control" 
+                    value={formData.endDate} 
+                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                  />
+                </div>
+              </div>
+
               <div className="form-group">
                 <label className="form-label">Premium Amount (INR)</label>
                 <input 
@@ -365,6 +454,54 @@ export default function Insurances() {
                 </button>
                 <button type="submit" className="btn btn-primary">
                   Save Policy
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Modal */}
+      {isPaymentModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2 style={{ marginBottom: '1.5rem', color: 'white' }}>Record Payment</h2>
+            <form onSubmit={handlePaymentSubmit}>
+              <div className="form-group">
+                <label className="form-label">Payment Date</label>
+                <input 
+                  type="date" 
+                  className="form-control" 
+                  required
+                  value={paymentFormData.date} 
+                  onChange={(e) => setPaymentFormData({ ...paymentFormData, date: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Amount Paid (INR)</label>
+                <input 
+                  type="number" 
+                  className="form-control" 
+                  required
+                  value={paymentFormData.amount} 
+                  onChange={(e) => setPaymentFormData({ ...paymentFormData, amount: parseFloat(e.target.value) || '' })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Notes (Optional)</label>
+                <textarea 
+                  className="form-control" 
+                  rows="2"
+                  value={paymentFormData.notes} 
+                  onChange={(e) => setPaymentFormData({ ...paymentFormData, notes: e.target.value })}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', justifyContent: 'flex-end' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setIsPaymentModalOpen(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Save Payment
                 </button>
               </div>
             </form>

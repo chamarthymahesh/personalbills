@@ -59,10 +59,17 @@ app.put('/api/config', async (req, res) => {
 // Dashboard Aggregate Summary Route
 app.get('/api/dashboard/summary', async (req, res) => {
   try {
-    // 1. Bills
-    const bills = await UtilityBill.find();
-    
-    // Calculate current month's bills paid
+    // Fetch all data in parallel for faster response times
+    const [bills, insurances, loans, debts, projects, rentals] = await Promise.all([
+      UtilityBill.find(),
+      Insurance.find(),
+      InterestLoan.find(),
+      PersonalDebt.find({ status: 'pending' }),
+      ConstructionProject.find(),
+      RentalIncome.find({ status: 'active' })
+    ]);
+
+    // 1. Bills - Calculate current month's bills paid
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1; // 1-12
     let currentMonthBillsPaid = 0;
@@ -78,11 +85,9 @@ app.get('/api/dashboard/summary', async (req, res) => {
     const pendingBillsAmount = 0; // Deprecated
 
     // 2. Insurances
-    const insurances = await Insurance.find();
     const activeInsurancesCount = insurances.filter(i => i.status === 'active').length;
     
     // 3. Interest Loans
-    const loans = await InterestLoan.find();
     let totalLentPrincipal = 0;
     let totalBorrowedPrincipal = 0;
     
@@ -105,7 +110,6 @@ app.get('/api/dashboard/summary', async (req, res) => {
     });
 
     // 4. Debts (Family/Friends)
-    const debts = await PersonalDebt.find({ status: 'pending' });
     let totalDebtsGiven = 0;
     let totalDebtsTaken = 0;
 
@@ -120,14 +124,12 @@ app.get('/api/dashboard/summary', async (req, res) => {
     });
 
     // 5. Construction
-    const projects = await ConstructionProject.find();
     const totalConstructionSpent = projects.reduce((total, project) => {
       const projectSpent = project.expenses.reduce((sum, e) => sum + e.amount, 0);
       return total + projectSpent;
     }, 0);
 
     // 6. Rentals
-    const rentals = await RentalIncome.find({ status: 'active' });
     const totalMonthlyRentExpectation = rentals.reduce((sum, r) => sum + r.monthlyRent, 0);
     
     // Calculate current month's received rent
@@ -354,6 +356,35 @@ app.put('/api/insurances/:id', async (req, res) => {
   try {
     const updated = await Insurance.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.json(updated);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/insurances/:id/payments', async (req, res) => {
+  try {
+    const policy = await Insurance.findById(req.params.id);
+    if (!policy) return res.status(404).json({ error: 'Policy not found' });
+    
+    policy.payments.push(req.body);
+
+    // Auto-advance the due date based on frequency
+    if (policy.dueDate && policy.frequency) {
+      const newDueDate = new Date(policy.dueDate);
+      if (policy.frequency === 'monthly') {
+        newDueDate.setMonth(newDueDate.getMonth() + 1);
+      } else if (policy.frequency === 'quarterly') {
+        newDueDate.setMonth(newDueDate.getMonth() + 3);
+      } else if (policy.frequency === 'half-yearly') {
+        newDueDate.setMonth(newDueDate.getMonth() + 6);
+      } else if (policy.frequency === 'yearly') {
+        newDueDate.setFullYear(newDueDate.getFullYear() + 1);
+      }
+      policy.dueDate = newDueDate;
+    }
+
+    await policy.save();
+    res.json(policy);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

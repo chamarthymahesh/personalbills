@@ -19,17 +19,26 @@ const UtilityBillSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // 2. Insurance Model
+const InsurancePaymentSchema = new mongoose.Schema({
+  date: { type: Date, required: true, default: Date.now },
+  amount: { type: Number, required: true },
+  notes: { type: String }
+});
+
 const InsuranceSchema = new mongoose.Schema({
   type: { type: String, required: true, enum: ['term', 'health', 'car', 'other'] },
   provider: { type: String, required: true }, // e.g. Tata AIG
   policyName: { type: String, required: true },
   policyNumber: { type: String },
+  startDate: { type: Date }, // NEW: Policy Start Date
+  endDate: { type: Date },   // NEW: Policy Expiry Date
   premiumAmount: { type: Number, required: true },
   frequency: { type: String, required: true, enum: ['monthly', 'quarterly', 'half-yearly', 'yearly'], default: 'yearly' },
-  dueDate: { type: Date, required: true },
+  dueDate: { type: Date, required: true }, // Acts as Next Payment Date
   status: { type: String, required: true, enum: ['active', 'expired', 'lapsed'], default: 'active' },
   carName: { type: String }, // Link to car name if applicable
-  notes: { type: String }
+  notes: { type: String },
+  payments: [InsurancePaymentSchema] // NEW: Tracker for individual payments
 }, { timestamps: true });
 
 // 3. Interest Loans Model (Lent or Borrowed money)

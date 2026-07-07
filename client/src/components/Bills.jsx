@@ -31,7 +31,7 @@ export default function Bills() {
     setLoading(true);
     fetch('/api/bills')
       .then(res => res.json())
-      .then(data => { setBills(data); setLoading(false); })
+      .then(data => { setBills(Array.isArray(data) ? data : []); setLoading(false); })
       .catch(err => { console.error(err); setLoading(false); });
   };
 

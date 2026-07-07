@@ -115,7 +115,7 @@ export default function Dashboard() {
       </div>
 
       {/* Metrics Row */}
-      <div className="metrics-grid">
+      <div className="metrics-grid animate-slide-up stagger-1">
         <div className="glass-card metric-card">
           <div className="metric-header">
             <span className="metric-title">Estimated Net Position</span>
@@ -172,7 +172,7 @@ export default function Dashboard() {
       </div>
 
       {/* Main Graphs Grid */}
-      <div className="dashboard-grid">
+      <div className="dashboard-grid animate-slide-up stagger-2">
         <div className="glass-card" style={{ minHeight: '380px' }}>
           <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <TrendingUp size={20} style={{ color: 'var(--color-primary)' }} />
@@ -229,7 +229,7 @@ export default function Dashboard() {
       </div>
 
       {/* Bottom Grid: Recent Transactions & Asset Summary */}
-      <div className="dashboard-grid" style={{ gridTemplateColumns: '1.5fr 1fr' }}>
+      <div className="dashboard-grid animate-slide-up stagger-3" style={{ gridTemplateColumns: '1.5fr 1fr' }}>
         {/* Recent Transactions */}
         <div className="glass-card" style={{ maxHeight: '420px', overflowY: 'auto' }}>
           <h3 style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
