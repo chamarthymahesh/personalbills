@@ -22,6 +22,8 @@ const UtilityBillSchema = new mongoose.Schema({
 const InsurancePaymentSchema = new mongoose.Schema({
   date: { type: Date, required: true, default: Date.now },
   amount: { type: Number, required: true },
+  month: { type: Number }, // 1 to 12
+  year: { type: Number },
   notes: { type: String }
 });
 
@@ -32,6 +34,8 @@ const InsuranceSchema = new mongoose.Schema({
   policyNumber: { type: String },
   startDate: { type: Date }, // NEW: Policy Start Date
   endDate: { type: Date },   // NEW: Policy Expiry Date
+  termYears: { type: Number }, // NEW: Policy Term in Years
+  maturityAmount: { type: Number }, // NEW: Expected Maturity Return
   premiumAmount: { type: Number, required: true },
   frequency: { type: String, required: true, enum: ['monthly', 'quarterly', 'half-yearly', 'yearly'], default: 'yearly' },
   dueDate: { type: Date, required: true }, // Acts as Next Payment Date

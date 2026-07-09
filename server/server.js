@@ -419,6 +419,35 @@ app.post('/api/insurances/:id/payments', async (req, res) => {
   }
 });
 
+// Update a specific payment on an insurance policy
+app.put('/api/insurances/:id/payments/:paymentId', async (req, res) => {
+  try {
+    const policy = await Insurance.findById(req.params.id);
+    if (!policy) return res.status(404).json({ error: 'Policy not found' });
+    const payment = policy.payments.id(req.params.paymentId);
+    if (!payment) return res.status(404).json({ error: 'Payment not found' });
+    
+    Object.assign(payment, req.body);
+    await policy.save();
+    res.json(policy);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Delete a specific payment from an insurance policy
+app.delete('/api/insurances/:id/payments/:paymentId', async (req, res) => {
+  try {
+    const policy = await Insurance.findById(req.params.id);
+    if (!policy) return res.status(404).json({ error: 'Policy not found' });
+    policy.payments.pull({ _id: req.params.paymentId });
+    await policy.save();
+    res.json(policy);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.delete('/api/insurances/:id', async (req, res) => {
   try {
     await Insurance.findByIdAndDelete(req.params.id);
