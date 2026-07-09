@@ -240,6 +240,7 @@ app.get('/api/dashboard/summary', async (req, res) => {
       summary: {
         pendingBillsCount,
         pendingBillsAmount,
+        currentMonthBillsPaid,
         activeInsurancesCount,
         totalLentPrincipal,
         totalBorrowedPrincipal,
@@ -269,12 +270,18 @@ app.get('/api/dropdowns', async (req, res) => {
     const debtContacts = await PersonalDebt.distinct('personName');
     const contacts = Array.from(new Set([...loanContacts, ...debtContacts])).sort();
 
+    // Fetch insurance providers from AdminConfig
+    let config = await AdminConfig.findOne({ configKey: 'main' });
+    if (!config) config = await AdminConfig.create({ configKey: 'main' });
+    const insuranceProviders = config.insuranceProviders || ['LIC', 'Tata AIG', 'SBI Life', 'PLI', 'Star Health', 'HDFC Ergo'];
+
     res.json({
       cars,
       insurances,
       projects,
       rentals,
-      contacts
+      contacts,
+      insuranceProviders
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
