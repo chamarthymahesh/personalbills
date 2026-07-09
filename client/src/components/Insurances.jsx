@@ -523,11 +523,11 @@ export default function Insurances() {
                         <Calendar size={14} /> Next Due
                       </span>
                       <span style={{ color: isUrgent ? 'var(--color-danger)' : 'white', fontWeight: isUrgent ? 700 : 500 }}>
-                        {new Date(p.dueDate).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
-                        {p.status === 'active' && daysLeft > 0 && <span style={{ opacity: 0.8, marginLeft: '0.5rem' }}>({daysLeft}d left)</span>}
+                        {p.dueDate ? new Date(p.dueDate).toLocaleDateString('en-IN', { dateStyle: 'medium' }) : 'Not Set'}
+                        {p.dueDate && p.status === 'active' && daysLeft > 0 && <span style={{ opacity: 0.8, marginLeft: '0.5rem' }}>({daysLeft}d left)</span>}
                       </span>
                     </div>
-                    {p.status === 'active' && (
+                    {p.dueDate && p.status === 'active' && (
                       <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '99px', overflow: 'hidden' }}>
                         <div style={{ 
                           width: `${progress}%`, 
