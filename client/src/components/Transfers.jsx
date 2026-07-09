@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Send, Plus, Calendar, AlertCircle, Edit3, Trash2, X, Save, User, Building, Phone } from 'lucide-react';
+import { Send, Plus, Calendar, Activity, Edit3, Trash2, X, Save, User, Building } from 'lucide-react';
 
 const fmt = (v) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v || 0);
 
