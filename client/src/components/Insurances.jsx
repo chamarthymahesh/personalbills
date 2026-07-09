@@ -167,6 +167,7 @@ export default function Insurances() {
   // Advanced UI State
   const [selectedProvider, setSelectedProvider] = useState('All');
   const [expandedCard, setExpandedCard] = useState(null);
+  const [editingPolicyId, setEditingPolicyId] = useState(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -235,14 +236,18 @@ export default function Insurances() {
       return;
     }
 
-    fetch('/api/insurances', {
-      method: 'POST',
+    const url = editingPolicyId ? `/api/insurances/${editingPolicyId}` : '/api/insurances';
+    const method = editingPolicyId ? 'PUT' : 'POST';
+
+    fetch(url, {
+      method: method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData)
     })
       .then(res => res.json())
       .then(() => {
         setIsModalOpen(false);
+        setEditingPolicyId(null);
         setFormData({
           type: 'term',
           provider: '',
@@ -260,7 +265,7 @@ export default function Insurances() {
         });
         fetchPolicies();
       })
-      .catch(err => console.error('Error creating policy:', err));
+      .catch(err => console.error('Error saving policy:', err));
   };
 
   const handleUpdateStatus = (id, newStatus) => {
@@ -359,7 +364,14 @@ export default function Insurances() {
           </h1>
           <p>Advanced Management for Tata AIG, SBI, LIC, PLI, and more.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setIsModalOpen(true)} style={{ padding: '0.75rem 1.5rem', borderRadius: '12px' }}>
+        <button className="btn btn-primary" onClick={() => {
+          setEditingPolicyId(null);
+          setFormData({
+            type: 'term', provider: '', policyName: '', policyNumber: '', startDate: '', endDate: '',
+            termYears: '', maturityAmount: '', premiumAmount: '', frequency: 'yearly', dueDate: '', carName: '', notes: ''
+          });
+          setIsModalOpen(true);
+        }} style={{ padding: '0.75rem 1.5rem', borderRadius: '12px' }}>
           <Plus size={20} />
           Add New Policy
         </button>
@@ -683,6 +695,27 @@ export default function Insurances() {
                         <CheckCircle size={16} />
                       </button>
                     )}
+                    <button className="btn btn-secondary" style={{ padding: '0.4rem 0.75rem', color: 'var(--color-primary)' }} onClick={() => {
+                      setEditingPolicyId(p._id);
+                      setFormData({
+                        type: p.type || 'term',
+                        provider: p.provider || '',
+                        policyName: p.policyName || '',
+                        policyNumber: p.policyNumber || '',
+                        startDate: p.startDate ? new Date(p.startDate).toISOString().split('T')[0] : '',
+                        endDate: p.endDate ? new Date(p.endDate).toISOString().split('T')[0] : '',
+                        termYears: p.termYears || '',
+                        maturityAmount: p.maturityAmount || '',
+                        premiumAmount: p.premiumAmount || '',
+                        frequency: p.frequency || 'yearly',
+                        dueDate: p.dueDate ? new Date(p.dueDate).toISOString().split('T')[0] : '',
+                        carName: p.carName || '',
+                        notes: p.notes || ''
+                      });
+                      setIsModalOpen(true);
+                    }} title="Edit Policy">
+                      <Edit3 size={16} />
+                    </button>
                     <button className="btn btn-danger" style={{ padding: '0.4rem 0.75rem' }} onClick={() => handleDelete(p._id)}>
                       <Trash2 size={16} />
                     </button>
@@ -703,8 +736,12 @@ export default function Insurances() {
                 <Shield style={{ color: 'var(--color-primary)' }} size={24} />
               </div>
               <div>
-                <h2 style={{ color: 'white', fontSize: '1.4rem' }}>Register New Policy</h2>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Fill in the details to securely track this insurance.</p>
+                <h2 style={{ color: 'white', fontSize: '1.4rem' }}>
+                  {editingPolicyId ? 'Edit Policy' : 'Register New Policy'}
+                </h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                  {editingPolicyId ? 'Update details for this insurance.' : 'Fill in the details to securely track this insurance.'}
+                </p>
               </div>
             </div>
 
