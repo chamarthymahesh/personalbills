@@ -790,5 +790,57 @@ app.post('/api/auth/login', async (req, res) => {
   res.json({ token });
 });
 
+// --- Transfers Routes ---
+app.get('/api/transfers', async (req, res) => {
+  try {
+    const transfers = await Transfer.find().sort({ createdAt: -1 });
+    res.json(transfers);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/transfers', async (req, res) => {
+  try {
+    const newTransfer = new Transfer(req.body);
+    await newTransfer.save();
+    res.status(201).json(newTransfer);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.put('/api/transfers/:id', async (req, res) => {
+  try {
+    const updated = await Transfer.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete('/api/transfers/:id', async (req, res) => {
+  try {
+    await Transfer.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Transfer deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- Admin Config Route ---
+app.get('/api/admin/config', async (req, res) => {
+  try {
+    let config = await AdminConfig.findOne({ configKey: 'main' });
+    if (!config) {
+      config = new AdminConfig({ configKey: 'main' });
+      await config.save();
+    }
+    res.json(config);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Start Server
 app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
