@@ -230,7 +230,7 @@ export default function Insurances() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.provider || !formData.policyName || !formData.premiumAmount || !formData.dueDate) {
+    if (!formData.provider || !formData.policyName || !formData.premiumAmount) {
       alert('Please fill out all required fields.');
       return;
     }
@@ -799,11 +799,10 @@ export default function Insurances() {
                 </div>
 
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-label">Next Premium Due Date <span style={{color:'var(--color-danger)'}}>*</span></label>
+                  <label className="form-label">Next Premium Due Date (Optional)</label>
                   <input 
                     type="date" 
                     className="form-control" 
-                    required
                     value={formData.dueDate} 
                     onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
                   />

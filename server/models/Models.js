@@ -38,7 +38,7 @@ const InsuranceSchema = new mongoose.Schema({
   maturityAmount: { type: Number }, // NEW: Expected Maturity Return
   premiumAmount: { type: Number, required: true },
   frequency: { type: String, required: true, enum: ['monthly', 'quarterly', 'half-yearly', 'yearly'], default: 'yearly' },
-  dueDate: { type: Date, required: true }, // Acts as Next Payment Date
+  dueDate: { type: Date }, // Optional now
   status: { type: String, required: true, enum: ['active', 'expired', 'lapsed'], default: 'active' },
   carName: { type: String }, // Link to car name if applicable
   notes: { type: String },
