@@ -13,7 +13,7 @@ const UtilityBillSchema = new mongoose.Schema({
   type: { type: String, required: true },
   name: { type: String, required: true },
   serviceNo: { type: String }, // NEW: Added service connection number
-  status: { type: String, required: true, enum: ['active', 'inactive'], default: 'active' },
+  status: { type: String, required: true, default: 'active' },
   notes: { type: String },
   payments: [BillPaymentSchema]
 }, { timestamps: true });
