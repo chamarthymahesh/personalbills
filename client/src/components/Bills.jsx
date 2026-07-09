@@ -19,7 +19,7 @@ const TYPE_CONFIG = {
 const fmt = (v) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v || 0);
 
 // ─── Inline month cell with Add/Edit/Delete ───────────────────────────────────
-function MonthCell({ bill, month, year, payment, onSaved }) {
+function MonthCell({ bill, month, monthName, year, payment, onSaved }) {
   const [mode, setMode] = useState(null); // null | 'add' | 'edit'
   const [amount, setAmount] = useState('');
   const [datePaid, setDatePaid] = useState(new Date().toISOString().split('T')[0]);
@@ -86,93 +86,97 @@ function MonthCell({ bill, month, year, payment, onSaved }) {
     setSaving(false);
   };
 
-  // ── Inline editor shown below the cell ────────────
+  const wrapperStyle = {
+    background: 'rgba(255,255,255,0.03)',
+    border: '1px solid rgba(255,255,255,0.05)',
+    borderRadius: '10px',
+    padding: '0.85rem',
+    display: 'flex',
+    flexDirection: 'column',
+    position: 'relative'
+  };
+
   if (mode) {
     return (
-      <td style={{ padding: '0.4rem', verticalAlign: 'top' }} onClick={e => e.stopPropagation()}>
-        <div style={{
-          background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.4)',
-          borderRadius: 8, padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: 115
-        }}>
-          <input
-            type="number" placeholder="Amount"
-            value={amount} onChange={e => setAmount(e.target.value)}
-            onClick={e => e.stopPropagation()}
-            style={{
-              background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: 5, padding: '3px 6px', color: '#fff', fontSize: '0.8rem', width: '100%'
-            }}
-          />
-          <input
-            type="date" value={datePaid} onChange={e => setDatePaid(e.target.value)}
-            onClick={e => e.stopPropagation()}
-            style={{
-              background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: 5, padding: '3px 6px', color: '#fff', fontSize: '0.75rem', width: '100%'
-            }}
-          />
-          <div style={{ display: 'flex', gap: '0.3rem', justifyContent: 'flex-end' }}>
-            <button onClick={cancel} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px' }}>
-              <X size={13} />
-            </button>
-            <button onClick={save} disabled={saving} style={{
-              background: 'var(--color-primary)', border: 'none', color: '#fff',
-              borderRadius: 4, padding: '2px 8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600
-            }}>
-              {saving ? '...' : <Save size={12} />}
-            </button>
-          </div>
+      <div style={{ ...wrapperStyle, border: '1px solid rgba(139,92,246,0.5)', background: 'rgba(139,92,246,0.08)' }} onClick={e => e.stopPropagation()}>
+        <div style={{ color: 'var(--color-primary)', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{monthName}</div>
+        <input
+          type="number" placeholder="Amount"
+          value={amount} onChange={e => setAmount(e.target.value)}
+          onClick={e => e.stopPropagation()}
+          style={{
+            background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.15)',
+            borderRadius: 6, padding: '6px 8px', color: '#fff', fontSize: '0.9rem', width: '100%', marginBottom: '0.5rem'
+          }}
+        />
+        <input
+          type="date" value={datePaid} onChange={e => setDatePaid(e.target.value)}
+          onClick={e => e.stopPropagation()}
+          style={{
+            background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.15)',
+            borderRadius: 6, padding: '6px 8px', color: '#fff', fontSize: '0.8rem', width: '100%', marginBottom: '0.6rem'
+          }}
+        />
+        <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
+          <button onClick={cancel} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}>
+            <X size={15} />
+          </button>
+          <button onClick={save} disabled={saving} style={{
+            background: 'var(--color-primary)', border: 'none', color: '#fff',
+            borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600
+          }}>
+            {saving ? '...' : <Save size={14} />}
+          </button>
         </div>
-      </td>
+      </div>
     );
   }
 
-  // ── Normal paid cell ──────────────────────────────
   if (payment) {
     return (
-      <td style={{ padding: '0.4rem 0.5rem', textAlign: 'center', verticalAlign: 'middle' }}>
-        <div style={{ position: 'relative', display: 'inline-block' }}>
-          <span style={{
-            display: 'block', color: 'var(--color-success)', fontWeight: 700, fontSize: '0.82rem',
-            background: 'rgba(16,185,129,0.1)', padding: '3px 6px', borderRadius: 5
-          }}>
-            {fmt(payment.amount)}
-          </span>
-          <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'center', marginTop: '0.2rem' }}>
-            <button onClick={openEdit} title="Edit" style={{
-              background: 'rgba(139,92,246,0.15)', border: 'none', borderRadius: 3,
-              color: 'var(--color-primary)', cursor: 'pointer', padding: '2px 4px', fontSize: '10px',
-              display: 'flex', alignItems: 'center'
-            }}>
-              <Edit3 size={10} />
-            </button>
-            <button onClick={del} title="Delete" style={{
-              background: 'rgba(244,63,94,0.15)', border: 'none', borderRadius: 3,
-              color: 'var(--color-danger)', cursor: 'pointer', padding: '2px 4px', fontSize: '10px',
-              display: 'flex', alignItems: 'center'
-            }}>
-              <Trash2 size={10} />
-            </button>
-          </div>
+      <div style={{ ...wrapperStyle, border: '1px solid rgba(16,185,129,0.3)', background: 'rgba(16,185,129,0.05)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.6rem' }}>
+          <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{monthName}</span>
+          <span style={{ color: 'var(--color-success)', fontSize: '1.05rem', fontWeight: 700 }}>{fmt(payment.amount)}</span>
         </div>
-      </td>
+        <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+          <Calendar size={12} />
+          {new Date(payment.datePaid).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto' }}>
+          <button onClick={openEdit} title="Edit" style={{
+            background: 'rgba(139,92,246,0.15)', border: 'none', borderRadius: 6,
+            color: 'var(--color-primary)', cursor: 'pointer', padding: '5px 8px', fontSize: '0.75rem', fontWeight: 600,
+            display: 'flex', alignItems: 'center', gap: '0.25rem', flex: 1, justifyContent: 'center', transition: 'all 0.2s'
+          }}>
+            <Edit3 size={12} /> Edit
+          </button>
+          <button onClick={del} title="Delete" style={{
+            background: 'rgba(244,63,94,0.15)', border: 'none', borderRadius: 6,
+            color: 'var(--color-danger)', cursor: 'pointer', padding: '5px 8px', fontSize: '0.75rem', fontWeight: 600,
+            display: 'flex', alignItems: 'center', gap: '0.25rem', flex: 1, justifyContent: 'center', transition: 'all 0.2s'
+          }}>
+            <Trash2 size={12} /> Delete
+          </button>
+        </div>
+      </div>
     );
   }
 
-  // ── Unpaid cell ──────────────────────────────────
   return (
-    <td style={{ padding: '0.4rem 0.5rem', textAlign: 'center', verticalAlign: 'middle' }}>
+    <div style={{ ...wrapperStyle, border: '1px dashed rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center', minHeight: '110px' }}>
+      <div style={{ position: 'absolute', top: '0.75rem', left: '0.85rem', color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{monthName}</div>
       <button onClick={openAdd} title="Add payment" style={{
-        background: 'transparent', border: '1px dashed rgba(255,255,255,0.15)',
-        color: 'rgba(255,255,255,0.2)', borderRadius: 5, padding: '3px 8px',
-        cursor: 'pointer', fontSize: '0.75rem', transition: 'all 0.2s'
+        background: 'transparent', border: '1px solid rgba(255,255,255,0.1)',
+        color: 'var(--text-secondary)', borderRadius: 8, padding: '8px 16px',
+        cursor: 'pointer', fontSize: '0.85rem', fontWeight: 500, transition: 'all 0.2s', marginTop: '1.25rem', width: '100%', display: 'flex', justifyContent: 'center', gap: '0.3rem', alignItems: 'center'
       }}
-        onMouseEnter={e => { e.target.style.borderColor = 'var(--color-primary)'; e.target.style.color = 'var(--color-primary)'; }}
-        onMouseLeave={e => { e.target.style.borderColor = 'rgba(255,255,255,0.15)'; e.target.style.color = 'rgba(255,255,255,0.2)'; }}
+        onMouseEnter={e => { e.target.style.borderColor = 'var(--color-primary)'; e.target.style.color = 'var(--color-primary)'; e.target.style.background = 'rgba(139,92,246,0.05)'; }}
+        onMouseLeave={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.color = 'var(--text-secondary)'; e.target.style.background = 'transparent'; }}
       >
-        + Add
+        <Plus size={14} /> Record
       </button>
-    </td>
+    </div>
   );
 }
 
@@ -241,50 +245,40 @@ function BillRow({ bill, selectedYear, onSaved, onDelete }) {
       {expanded && (
         <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
           <td colSpan={4} style={{ padding: 0 }}>
-            <div style={{ background: 'rgba(0,0,0,0.25)', padding: '0.75rem 1rem 1rem' }}>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginBottom: '0.6rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                Month-wise Payments — {selectedYear}
-              </p>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr>
-                      {MONTHS.map(m => (
-                        <th key={m} style={{
-                          padding: '0.3rem 0.5rem', textAlign: 'center', fontSize: '0.75rem',
-                          color: 'var(--text-muted)', fontWeight: 600, minWidth: 80
-                        }}>{m}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      {MONTHS.map((_, i) => (
-                        <MonthCell
-                          key={i}
-                          bill={bill}
-                          month={i + 1}
-                          year={selectedYear}
-                          payment={yearPayments[i]}
-                          onSaved={onSaved}
-                        />
-                      ))}
-                    </tr>
-                  </tbody>
-                </table>
+            <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.02)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                <p style={{ color: 'var(--text-primary)', fontSize: '0.9rem', margin: 0, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                  Month-wise Ledger — {selectedYear}
+                </p>
+                <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.85rem', background: 'rgba(255,255,255,0.05)', padding: '0.5rem 1rem', borderRadius: '8px' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>
+                    Paid: <strong style={{ color: 'var(--color-success)', marginLeft: '4px' }}>{paidCount} months</strong>
+                  </span>
+                  <span style={{ color: 'var(--text-muted)' }}>
+                    Pending: <strong style={{ color: 'var(--color-warning)', marginLeft: '4px' }}>{12 - paidCount} months</strong>
+                  </span>
+                  <span style={{ color: 'var(--text-muted)' }}>
+                    Year Total: <strong style={{ color: 'var(--color-primary)', marginLeft: '4px', fontSize: '0.95rem' }}>{fmt(yearTotal)}</strong>
+                  </span>
+                </div>
               </div>
 
-              {/* Row total summary */}
-              <div style={{ marginTop: '0.75rem', display: 'flex', gap: '1.5rem', fontSize: '0.8rem' }}>
-                <span style={{ color: 'var(--text-muted)' }}>
-                  Paid months: <strong style={{ color: 'var(--color-success)' }}>{paidCount}</strong>
-                </span>
-                <span style={{ color: 'var(--text-muted)' }}>
-                  Pending: <strong style={{ color: 'var(--color-warning)' }}>{12 - paidCount}</strong>
-                </span>
-                <span style={{ color: 'var(--text-muted)' }}>
-                  Year Total: <strong style={{ color: 'var(--color-primary)' }}>{fmt(yearTotal)}</strong>
-                </span>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+                gap: '1rem'
+              }}>
+                {MONTHS.map((mName, i) => (
+                  <MonthCell
+                    key={i}
+                    bill={bill}
+                    month={i + 1}
+                    monthName={mName}
+                    year={selectedYear}
+                    payment={yearPayments[i]}
+                    onSaved={onSaved}
+                  />
+                ))}
               </div>
             </div>
           </td>
