@@ -365,10 +365,10 @@ export default function Reports() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
         <StatCard
           icon={IndianRupee}
-          label={isIncome ? \`Total Received \${selectedYear}\` : \`Total Spend \${selectedYear}\`}
+          label={isIncome ? `Total Received ${selectedYear}` : `Total Spend ${selectedYear}`}
           value={fmt(totalAmount)}
           color={isIncome ? "var(--color-success)" : "var(--color-primary)"}
-          sub={trendPct ? \`\${trendPct > 0 ? '+' : ''}\${trendPct}% vs \${selectedYear - 1}\` : \`No \${selectedYear - 1} data\`}
+          sub={trendPct ? `${trendPct > 0 ? '+' : ''}${trendPct}% vs ${selectedYear - 1}` : `No ${selectedYear - 1} data`}
           trend={isIncome ? parseFloat(trendPct) : -parseFloat(trendPct)}
         />
         <StatCard
@@ -382,7 +382,7 @@ export default function Reports() {
           icon={Activity}
           label="Active Tracking"
           value={filteredByType.filter(b => b.status === 'active' || b.status === 'ongoing').length}
-          sub={\`of \${filteredByType.length} total filtered\`}
+          sub={`of ${filteredByType.length} total filtered`}
           color="var(--color-info)"
         />
       </div>
@@ -397,7 +397,7 @@ export default function Reports() {
           <BarChart data={monthlyTrend} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
             <XAxis dataKey="name" stroke="var(--text-muted)" tick={{ fontSize: 12 }} />
-            <YAxis stroke="var(--text-muted)" tick={{ fontSize: 12 }} tickFormatter={v => \`₹\${v >= 1000 ? (v/1000).toFixed(0)+'k' : v}\`} />
+            <YAxis stroke="var(--text-muted)" tick={{ fontSize: 12 }} tickFormatter={v => `₹${v >= 1000 ? (v/1000).toFixed(0)+'k' : v}`} />
             <Tooltip content={<CustomTooltip />} />
             <Bar dataKey="total" name={isIncome ? "Total Received" : "Total Spend"} radius={[6,6,0,0]} fill="url(#barGrad)" />
             <defs>
@@ -456,7 +456,7 @@ export default function Reports() {
               <BarChart data={connectionWise} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" horizontal={false} />
                 <XAxis type="number" stroke="var(--text-muted)" tick={{ fontSize: 11 }}
-                  tickFormatter={v => \`₹\${v >= 1000 ? (v/1000).toFixed(0)+'k' : v}\`} />
+                  tickFormatter={v => `₹${v >= 1000 ? (v/1000).toFixed(0)+'k' : v}`} />
                 <YAxis type="category" dataKey="name" stroke="var(--text-muted)" tick={{ fontSize: 11 }} width={120} />
                 <Tooltip content={<CustomTooltip />} />
                 <Bar dataKey="total" name="Total" radius={[0,6,6,0]}>
@@ -480,12 +480,12 @@ export default function Reports() {
           <LineChart data={yoyData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
             <XAxis dataKey="name" stroke="var(--text-muted)" tick={{ fontSize: 12 }} />
-            <YAxis stroke="var(--text-muted)" tick={{ fontSize: 12 }} tickFormatter={v => \`₹\${v >= 1000 ? (v/1000).toFixed(0)+'k' : v}\`} />
+            <YAxis stroke="var(--text-muted)" tick={{ fontSize: 12 }} tickFormatter={v => `₹${v >= 1000 ? (v/1000).toFixed(0)+'k' : v}`} />
             <Tooltip content={<CustomTooltip />} />
             <Legend formatter={val => <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{val}</span>} />
-            <Line type="monotone" dataKey={selectedYear - 1} name={\`\${selectedYear - 1}\`}
+            <Line type="monotone" dataKey={selectedYear - 1} name={`${selectedYear - 1}`}
               stroke="rgba(139,92,246,0.5)" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 3, fill: 'rgba(139,92,246,0.5)' }} />
-            <Line type="monotone" dataKey={selectedYear} name={\`\${selectedYear}\`}
+            <Line type="monotone" dataKey={selectedYear} name={`${selectedYear}`}
               stroke={isIncome ? 'var(--color-success)' : 'var(--color-primary)'} strokeWidth={2.5} dot={{ r: 4, fill: isIncome ? 'var(--color-success)' : 'var(--color-primary)' }} />
           </LineChart>
         </ResponsiveContainer>
@@ -522,7 +522,7 @@ export default function Reports() {
                       {b.name}
                     </td>
                     <td style={{ padding: '0.6rem 0.8rem' }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', background: \`\${typeColor}18\`, color: typeColor, padding: '2px 8px', borderRadius: 20, fontSize: '0.75rem', fontWeight: 600 }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', background: `${typeColor}18`, color: typeColor, padding: '2px 8px', borderRadius: 20, fontSize: '0.75rem', fontWeight: 600 }}>
                         <TypeIcon size={11} /> {TYPE_CONFIG[b.type]?.label || b.category}
                       </span>
                     </td>
