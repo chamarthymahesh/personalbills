@@ -168,6 +168,7 @@ export default function Insurances() {
   const [selectedProvider, setSelectedProvider] = useState('All');
   const [expandedCard, setExpandedCard] = useState(null);
   const [editingPolicyId, setEditingPolicyId] = useState(null);
+  const [autoFillLoading, setAutoFillLoading] = useState(null); // stores policyId being auto-filled
 
   // Form State
   const [formData, setFormData] = useState({
@@ -283,6 +284,28 @@ export default function Insurances() {
     fetch(`/api/insurances/${id}`, { method: 'DELETE' })
       .then(() => fetchPolicies())
       .catch(err => console.error('Error deleting policy:', err));
+  };
+
+  const handleAutoFill = async (policy) => {
+    if (!policy.startDate) {
+      alert('This policy has no Start Date set. Please edit the policy and add a Start Date first.');
+      return;
+    }
+    const startStr = new Date(policy.startDate).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+    const now = new Date();
+    const endStr = now.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+    if (!window.confirm(`Auto-fill all monthly payments of ${formatCurrency(policy.premiumAmount)} from ${startStr} to ${endStr}?\n\nAlready recorded months will be skipped.`)) return;
+    setAutoFillLoading(policy._id);
+    try {
+      const res = await fetch(`/api/insurances/${policy._id}/autofill`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Auto-fill failed');
+      await fetchPolicies();
+      alert(data.message);
+    } catch (err) {
+      alert('Auto-fill failed: ' + err.message);
+    }
+    setAutoFillLoading(null);
   };
 
   const handlePaymentSubmit = (e) => {
@@ -637,18 +660,45 @@ export default function Insurances() {
 
                       {/* Month-wise Ledger */}
                       <div style={{ marginTop: '2rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
                           <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Month-wise Ledger</span>
-                          <select 
-                            className="form-control" 
-                            style={{ width: 'auto', padding: '0.4rem 2rem 0.4rem 1rem', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)' }}
-                            value={selectedYear}
-                            onChange={(e) => setSelectedYear(Number(e.target.value))}
-                          >
-                            {yearOptions.map(yr => (
-                              <option key={yr} value={yr}>{yr}</option>
-                            ))}
-                          </select>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            {/* Auto-fill Button */}
+                            {p.startDate && (
+                              <button
+                                onClick={() => handleAutoFill(p)}
+                                disabled={autoFillLoading === p._id}
+                                style={{
+                                  display: 'flex', alignItems: 'center', gap: '0.4rem',
+                                  background: autoFillLoading === p._id ? 'rgba(16,185,129,0.15)' : 'rgba(16,185,129,0.2)',
+                                  border: '1px solid rgba(16,185,129,0.4)',
+                                  color: 'var(--color-success)',
+                                  borderRadius: '8px', padding: '0.4rem 0.9rem',
+                                  cursor: autoFillLoading === p._id ? 'not-allowed' : 'pointer',
+                                  fontSize: '0.8rem', fontWeight: 600,
+                                  transition: 'all 0.2s ease'
+                                }}
+                                title={`Auto-fill all months from ${new Date(p.startDate).toLocaleDateString('en-IN', {month:'short',year:'numeric'})} to today`}
+                              >
+                                {autoFillLoading === p._id ? (
+                                  <span style={{ display: 'inline-block', width: 14, height: 14, border: '2px solid rgba(16,185,129,0.3)', borderTop: '2px solid var(--color-success)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                                ) : (
+                                  <Activity size={14} />
+                                )}
+                                {autoFillLoading === p._id ? 'Filling...' : '⚡ Auto-fill Past'}
+                              </button>
+                            )}
+                            <select 
+                              className="form-control" 
+                              style={{ width: 'auto', padding: '0.4rem 2rem 0.4rem 1rem', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)' }}
+                              value={selectedYear}
+                              onChange={(e) => setSelectedYear(Number(e.target.value))}
+                            >
+                              {yearOptions.map(yr => (
+                                <option key={yr} value={yr}>{yr}</option>
+                              ))}
+                            </select>
+                          </div>
                         </div>
                         
                         <div style={{

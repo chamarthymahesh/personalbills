@@ -457,6 +457,58 @@ app.delete('/api/insurances/:id', async (req, res) => {
   }
 });
 
+// Auto-fill past monthly payments for a policy from its start date to current month
+app.post('/api/insurances/:id/autofill', async (req, res) => {
+  try {
+    const policy = await Insurance.findById(req.params.id);
+    if (!policy) return res.status(404).json({ error: 'Policy not found' });
+    if (!policy.startDate) return res.status(400).json({ error: 'Policy has no start date set. Please edit the policy and set a Start Date first.' });
+    if (!policy.premiumAmount) return res.status(400).json({ error: 'Policy has no premium amount set.' });
+
+    const start = new Date(policy.startDate);
+    const now = new Date();
+    // Stop at current month (inclusive)
+    const stopYear = now.getFullYear();
+    const stopMonth = now.getMonth() + 1; // 1-12
+
+    let startYear = start.getFullYear();
+    let startMonth = start.getMonth() + 1; // 1-12
+
+    // Build a set of already-recorded month/year combos to avoid duplicates
+    const recorded = new Set(
+      policy.payments.map(p => `${p.year}-${p.month}`)
+    );
+
+    const toAdd = [];
+    let y = startYear, m = startMonth;
+    while (y < stopYear || (y === stopYear && m <= stopMonth)) {
+      const key = `${y}-${m}`;
+      if (!recorded.has(key)) {
+        toAdd.push({
+          amount: policy.premiumAmount,
+          month: m,
+          year: y,
+          date: new Date(y, m - 1, 1), // 1st of that month
+          notes: 'Auto-filled'
+        });
+      }
+      // Advance by 1 month
+      m++;
+      if (m > 12) { m = 1; y++; }
+    }
+
+    if (toAdd.length === 0) {
+      return res.json({ message: 'All months already have payments recorded.', added: 0, policy });
+    }
+
+    policy.payments.push(...toAdd);
+    await policy.save();
+    res.json({ message: `Successfully auto-filled ${toAdd.length} month(s).`, added: toAdd.length, policy });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Interest Loans Routes
 app.get('/api/loans', async (req, res) => {
   try {
