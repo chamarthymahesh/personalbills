@@ -1,5 +1,160 @@
 import React, { useEffect, useState } from 'react';
-import { Shield, Plus, Calendar, AlertCircle, CheckCircle, Trash2, Heart, Award, ShieldAlert, ChevronDown, ChevronUp, DollarSign, Activity, FileText } from 'lucide-react';
+import { Shield, Plus, Calendar, AlertCircle, CheckCircle, Trash2, Heart, Award, ShieldAlert, ChevronDown, ChevronUp, DollarSign, Activity, FileText, X, Save, Edit3 } from 'lucide-react';
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const fmt = (v) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v || 0);
+
+function MonthCell({ policy, month, monthName, year, payment, onSaved }) {
+  const [mode, setMode] = useState(null);
+  const [amount, setAmount] = useState('');
+  const [datePaid, setDatePaid] = useState(new Date().toISOString().split('T')[0]);
+  const [saving, setSaving] = useState(false);
+
+  const openEdit = (e) => {
+    e.stopPropagation();
+    setAmount(payment.amount);
+    setDatePaid(payment.date ? new Date(payment.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
+    setMode('edit');
+  };
+  const openAdd = (e) => {
+    e.stopPropagation();
+    setAmount(policy.premiumAmount || '');
+    setDatePaid(new Date().toISOString().split('T')[0]);
+    setMode('add');
+  };
+  const cancel = (e) => { e && e.stopPropagation(); setMode(null); };
+
+  const save = async (e) => {
+    e.stopPropagation();
+    if (!amount) return;
+    setSaving(true);
+    try {
+      let res;
+      if (mode === 'add') {
+        res = await fetch(`/api/insurances/${policy._id}/payments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: parseFloat(amount), month, year, date: datePaid || undefined }),
+        });
+      } else {
+        res = await fetch(`/api/insurances/${policy._id}/payments/${payment._id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: parseFloat(amount), month, year, date: datePaid || undefined }),
+        });
+      }
+      
+      if (!res.ok) throw new Error();
+      onSaved();
+      setMode(null);
+    } catch (err) { 
+      console.error(err);
+      alert('Failed to save payment');
+    }
+    setSaving(false);
+  };
+
+  const del = async (e) => {
+    e.stopPropagation();
+    if (!window.confirm('Delete this payment?')) return;
+    setSaving(true);
+    try {
+      await fetch(`/api/insurances/${policy._id}/payments/${payment._id}`, { method: 'DELETE' });
+      onSaved();
+    } catch (err) { console.error(err); }
+    setSaving(false);
+  };
+
+  const wrapperStyle = {
+    background: 'rgba(255,255,255,0.03)',
+    border: '1px solid rgba(255,255,255,0.05)',
+    borderRadius: '10px',
+    padding: '0.85rem',
+    display: 'flex',
+    flexDirection: 'column',
+    position: 'relative'
+  };
+
+  if (mode) {
+    return (
+      <div style={{ ...wrapperStyle, border: '1px solid rgba(139,92,246,0.5)', background: 'rgba(139,92,246,0.08)' }} onClick={e => e.stopPropagation()}>
+        <div style={{ color: 'var(--color-primary)', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.5rem', textTransform: 'uppercase' }}>{monthName}</div>
+        <input
+          type="number" placeholder="Amount"
+          value={amount} onChange={e => setAmount(e.target.value)}
+          onClick={e => e.stopPropagation()}
+          style={{
+            background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.15)',
+            borderRadius: 6, padding: '6px 8px', color: '#fff', fontSize: '0.9rem', width: '100%', marginBottom: '0.5rem'
+          }}
+        />
+        <input
+          type="date" value={datePaid} onChange={e => setDatePaid(e.target.value)}
+          onClick={e => e.stopPropagation()}
+          style={{
+            background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.15)',
+            borderRadius: 6, padding: '6px 8px', color: '#fff', fontSize: '0.8rem', width: '100%', marginBottom: '0.6rem'
+          }}
+        />
+        <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
+          <button onClick={cancel} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}>
+            <X size={15} />
+          </button>
+          <button onClick={save} disabled={saving} style={{
+            background: 'var(--color-primary)', border: 'none', color: '#fff',
+            borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600
+          }}>
+            {saving ? '...' : <Save size={14} />}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (payment) {
+    return (
+      <div style={{ ...wrapperStyle, border: '1px solid rgba(16,185,129,0.3)', background: 'rgba(16,185,129,0.05)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.6rem' }}>
+          <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>{monthName}</span>
+          <span style={{ color: 'var(--color-success)', fontSize: '1.05rem', fontWeight: 700 }}>{fmt(payment.amount)}</span>
+        </div>
+        <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+          <Calendar size={12} />
+          {new Date(payment.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto' }}>
+          <button onClick={openEdit} title="Edit" style={{
+            background: 'rgba(139,92,246,0.15)', border: 'none', borderRadius: 6,
+            color: 'var(--color-primary)', cursor: 'pointer', padding: '5px 8px', fontSize: '0.75rem', fontWeight: 600,
+            display: 'flex', alignItems: 'center', gap: '0.25rem', flex: 1, justifyContent: 'center'
+          }}>
+            <Edit3 size={12} /> Edit
+          </button>
+          <button onClick={del} title="Delete" style={{
+            background: 'rgba(244,63,94,0.15)', border: 'none', borderRadius: 6,
+            color: 'var(--color-danger)', cursor: 'pointer', padding: '5px 8px', fontSize: '0.75rem', fontWeight: 600,
+            display: 'flex', alignItems: 'center', gap: '0.25rem', flex: 1, justifyContent: 'center'
+          }}>
+            <Trash2 size={12} /> Delete
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ ...wrapperStyle, border: '1px dashed rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center', minHeight: '110px' }}>
+      <div style={{ position: 'absolute', top: '0.75rem', left: '0.85rem', color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>{monthName}</div>
+      <button onClick={openAdd} title="Add payment" style={{
+        background: 'transparent', border: '1px solid rgba(255,255,255,0.1)',
+        color: 'var(--text-secondary)', borderRadius: 8, padding: '8px 16px',
+        cursor: 'pointer', fontSize: '0.85rem', fontWeight: 500, transition: 'all 0.2s', marginTop: '1.25rem', width: '100%', display: 'flex', justifyContent: 'center', gap: '0.3rem', alignItems: 'center'
+      }}>
+        <Plus size={14} /> Record
+      </button>
+    </div>
+  );
+}
 
 export default function Insurances() {
   const [policies, setPolicies] = useState([]);
@@ -21,6 +176,8 @@ export default function Insurances() {
     policyNumber: '',
     startDate: '',
     endDate: '',
+    termYears: '',
+    maturityAmount: '',
     premiumAmount: '',
     frequency: 'yearly',
     dueDate: '',
@@ -93,6 +250,8 @@ export default function Insurances() {
           policyNumber: '',
           startDate: '',
           endDate: '',
+          termYears: '',
+          maturityAmount: '',
           premiumAmount: '',
           frequency: 'yearly',
           dueDate: '',
@@ -166,8 +325,11 @@ export default function Insurances() {
       style: 'currency',
       currency: 'INR',
       maximumFractionDigits: 0
-    }).format(val);
+    }).format(val || 0);
   };
+
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const yearOptions = Array.from(new Array(10), (val, index) => new Date().getFullYear() - 5 + index);
 
   // --- Derived Data for Advanced UI ---
   const providers = ['All', ...new Set(policies.map(p => p.provider))].sort();
@@ -409,6 +571,28 @@ export default function Insurances() {
                       borderTop: '1px solid rgba(255,255,255,0.05)',
                       animation: 'fadeIn 0.3s ease'
                     }}>
+                      {/* Expanded Policy Insights */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                        <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '10px' }}>
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block', marginBottom: '0.25rem' }}>Total Paid All Time</span>
+                          <span style={{ color: 'white', fontWeight: 600, fontSize: '1.1rem' }}>
+                            {formatCurrency((p.payments || []).reduce((s, pay) => s + pay.amount, 0))}
+                          </span>
+                        </div>
+                        {p.termYears && (
+                          <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '10px' }}>
+                            <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block', marginBottom: '0.25rem' }}>Policy Term</span>
+                            <span style={{ color: 'white', fontWeight: 600, fontSize: '1.1rem' }}>{p.termYears} Years</span>
+                          </div>
+                        )}
+                        {p.maturityAmount && (
+                          <div style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', padding: '1rem', borderRadius: '10px' }}>
+                            <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block', marginBottom: '0.25rem' }}>Expected Maturity</span>
+                            <span style={{ color: 'var(--color-success)', fontWeight: 600, fontSize: '1.1rem' }}>{formatCurrency(p.maturityAmount)}</span>
+                          </div>
+                        )}
+                      </div>
+
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
                         {p.startDate && (
                           <div>
@@ -439,21 +623,44 @@ export default function Insurances() {
                         </div>
                       )}
 
-                      {/* Payment History inside accordion */}
-                      <div>
-                        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Payment History</span>
-                        {p.payments && p.payments.length > 0 ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                            {p.payments.slice().reverse().map((pay, i) => (
-                              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', background: 'rgba(255,255,255,0.02)', padding: '0.5rem 0.75rem', borderRadius: '6px' }}>
-                                <span style={{ color: 'var(--text-secondary)' }}>{new Date(pay.date).toLocaleDateString('en-IN')}</span>
-                                <span style={{ color: 'var(--color-success)', fontWeight: 500 }}>{formatCurrency(pay.amount)}</span>
-                              </div>
+                      {/* Month-wise Ledger */}
+                      <div style={{ marginTop: '2rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                          <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Month-wise Ledger</span>
+                          <select 
+                            className="form-control" 
+                            style={{ width: 'auto', padding: '0.4rem 2rem 0.4rem 1rem', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)' }}
+                            value={selectedYear}
+                            onChange={(e) => setSelectedYear(Number(e.target.value))}
+                          >
+                            {yearOptions.map(yr => (
+                              <option key={yr} value={yr}>{yr}</option>
                             ))}
-                          </div>
-                        ) : (
-                          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No payments recorded yet.</p>
-                        )}
+                          </select>
+                        </div>
+                        
+                        <div style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+                          gap: '1rem'
+                        }}>
+                          {MONTHS.map((mName, i) => {
+                            // Find payment for this exact month & year. Fallback to generic payments not yet mapped if needed?
+                            // Actually, just strict map for month-wise:
+                            const payment = (p.payments || []).find(pay => pay.year === selectedYear && pay.month === (i + 1));
+                            return (
+                              <MonthCell
+                                key={i}
+                                policy={p}
+                                month={i + 1}
+                                monthName={mName}
+                                year={selectedYear}
+                                payment={payment}
+                                onSaved={fetchPolicies}
+                              />
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -612,13 +819,35 @@ export default function Insurances() {
                   />
                 </div>
 
-                <div className="form-group" style={{ gridColumn: 'span 2', marginBottom: 0 }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">Maturity / Expiry Date (Optional)</label>
                   <input 
                     type="date" 
                     className="form-control" 
                     value={formData.endDate} 
                     onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Policy Term (Years)</label>
+                  <input 
+                    type="number" 
+                    className="form-control" 
+                    placeholder="e.g. 10"
+                    value={formData.termYears} 
+                    onChange={(e) => setFormData({ ...formData, termYears: parseInt(e.target.value) || '' })}
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Expected Maturity Amount (₹)</label>
+                  <input 
+                    type="number" 
+                    className="form-control" 
+                    placeholder="0"
+                    value={formData.maturityAmount} 
+                    onChange={(e) => setFormData({ ...formData, maturityAmount: parseFloat(e.target.value) || '' })}
                   />
                 </div>
 
