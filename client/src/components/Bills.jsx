@@ -300,6 +300,7 @@ export default function Bills() {
   const [config, setConfig] = useState({ billTypes: [] });
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
   const [isConnModalOpen, setIsConnModalOpen] = useState(false);
   const [connFormData, setConnFormData] = useState({ type: 'electricity', name: '', serviceNo: '', notes: '' });
@@ -342,12 +343,24 @@ export default function Bills() {
     return [...yrs].sort((a, b) => b - a);
   }, [bills]);
 
-  // Summary stats for selected year
+  // Derive unique categories from data
+  const categories = useMemo(() => {
+    const types = [...new Set(bills.map(b => b.type))].sort();
+    return ['all', ...types];
+  }, [bills]);
+
+  // Filtered bills by selected category
+  const filteredBills = useMemo(() => {
+    if (selectedCategory === 'all') return bills;
+    return bills.filter(b => b.type === selectedCategory);
+  }, [bills, selectedCategory]);
+
+  // Summary stats for selected year (computed from filteredBills)
   const { yearTotal, paidThisMonth, unpaidConnCount } = useMemo(() => {
     const cm = new Date().getMonth() + 1;
     const cy = new Date().getFullYear();
     let yearTotal = 0, paidThisMonth = 0, unpaidConnCount = 0;
-    bills.forEach(b => {
+    filteredBills.forEach(b => {
       const yr = b.payments?.filter(p => p.year === selectedYear) || [];
       yearTotal += yr.reduce((s, p) => s + p.amount, 0);
       const thisMonthPay = b.payments?.find(p => p.month === cm && p.year === cy);
@@ -359,15 +372,31 @@ export default function Bills() {
       if (!hasPaidAll) unpaidConnCount++;
     });
     return { yearTotal, paidThisMonth, unpaidConnCount };
-  }, [bills, selectedYear]);
+  }, [filteredBills, selectedYear]);
+
+  const getCategoryLabel = (cat) => {
+    if (cat === 'all') return 'All';
+    return TYPE_CONFIG[cat]?.label || cat.charAt(0).toUpperCase() + cat.slice(1);
+  };
+  const getCategoryIcon = (cat) => {
+    if (cat === 'all') return Zap;
+    return TYPE_CONFIG[cat]?.icon || FileText;
+  };
+  const getCategoryColor = (cat) => {
+    if (cat === 'all') return 'var(--color-primary)';
+    return TYPE_CONFIG[cat]?.color || 'var(--text-muted)';
+  };
 
   return (
-    <div>
+    <div style={{ animation: 'fadeIn 0.5s ease-out' }}>
       {/* Header */}
-      <div className="page-header">
+      <div className="page-header" style={{ marginBottom: '1.5rem' }}>
         <div className="page-title-section">
-          <h1>Utility Connections</h1>
-          <p>Click any connection to view and edit month-wise payments.</p>
+          <h1 style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <Zap style={{ color: 'var(--color-warning)' }} size={32} />
+            Utility Connections
+          </h1>
+          <p>Track and manage all your electricity, internet, water, gas & phone bills.</p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
           <select
@@ -378,39 +407,88 @@ export default function Bills() {
           >
             {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
-          <button className="btn btn-primary" onClick={() => setIsConnModalOpen(true)}>
-            <Plus size={18} /> Add Connection
+          <button className="btn btn-primary" onClick={() => setIsConnModalOpen(true)} style={{ padding: '0.75rem 1.5rem', borderRadius: '12px' }}>
+            <Plus size={20} />
+            Add Connection
           </button>
         </div>
       </div>
 
       {/* Summary Cards */}
-      <div className="metrics-grid" style={{ marginBottom: '1.5rem' }}>
-        <div className="glass-card metric-card">
+      <div className="metrics-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', marginBottom: '2rem' }}>
+        <div className="glass-card metric-card" style={{ borderLeft: `4px solid var(--color-primary)` }}>
           <div className="metric-header">
-            <span className="metric-title">Year {selectedYear} Total</span>
-            <DollarSign size={20} style={{ color: 'var(--color-primary)' }} />
+            <span className="metric-title">{selectedCategory === 'all' ? `Year ${selectedYear} Total` : `${getCategoryLabel(selectedCategory)} — ${selectedYear}`}</span>
+            <div className="metric-icon-wrapper" style={{ background: 'var(--color-primary-glow)' }}>
+              <DollarSign size={22} style={{ color: 'var(--color-primary)' }} />
+            </div>
           </div>
-          <h2 className="metric-value" style={{ color: 'var(--color-primary)' }}>{fmt(yearTotal)}</h2>
-          <p className="metric-desc">All connections combined</p>
+          <div>
+            <h2 className="metric-value" style={{ color: 'var(--color-primary)' }}>{fmt(yearTotal)}</h2>
+            <p className="metric-desc" style={{ color: 'var(--text-secondary)' }}>{selectedCategory === 'all' ? 'All categories combined' : `Filtered to ${getCategoryLabel(selectedCategory)} only`}</p>
+          </div>
         </div>
-        <div className="glass-card metric-card">
+        <div className="glass-card metric-card" style={{ borderLeft: '4px solid var(--color-success)' }}>
           <div className="metric-header">
             <span className="metric-title">Paid This Month</span>
-            <DollarSign size={20} style={{ color: 'var(--color-success)' }} />
+            <div className="metric-icon-wrapper" style={{ background: 'var(--color-success-glow)' }}>
+              <DollarSign size={22} style={{ color: 'var(--color-success)' }} />
+            </div>
           </div>
-          <h2 className="metric-value" style={{ color: 'var(--color-success)' }}>{fmt(paidThisMonth)}</h2>
-          <p className="metric-desc">{new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
+          <div>
+            <h2 className="metric-value" style={{ color: 'var(--color-success)' }}>{fmt(paidThisMonth)}</h2>
+            <p className="metric-desc" style={{ color: 'var(--text-secondary)' }}>{new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
+          </div>
         </div>
-        <div className="glass-card metric-card">
+        <div className="glass-card metric-card" style={{ borderLeft: '4px solid var(--color-warning)' }}>
           <div className="metric-header">
-            <span className="metric-title">Active Connections</span>
-            <Zap size={20} style={{ color: 'var(--color-warning)' }} />
+            <span className="metric-title">Connections</span>
+            <div className="metric-icon-wrapper" style={{ background: 'var(--color-warning-glow)' }}>
+              <Zap size={22} style={{ color: 'var(--color-warning)' }} />
+            </div>
           </div>
-          <h2 className="metric-value">{bills.length}</h2>
-          <p className="metric-desc">{unpaidConnCount} with pending months</p>
+          <div>
+            <h2 className="metric-value">{filteredBills.length}</h2>
+            <p className="metric-desc" style={{ color: 'var(--text-secondary)' }}>{unpaidConnCount} with pending months</p>
+          </div>
         </div>
       </div>
+
+      {/* Category Tabs */}
+      {categories.length > 2 && (
+        <div style={{ display: 'flex', gap: '0.75rem', overflowX: 'auto', paddingBottom: '1rem', marginBottom: '1.5rem', scrollbarWidth: 'none' }}>
+          {categories.map(cat => {
+            const CatIcon = getCategoryIcon(cat);
+            const count = cat === 'all' ? bills.length : bills.filter(b => b.type === cat).length;
+            const isActive = selectedCategory === cat;
+            return (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                style={{
+                  background: isActive ? getCategoryColor(cat) : 'rgba(255,255,255,0.05)',
+                  color: isActive ? 'white' : 'var(--text-secondary)',
+                  border: `1px solid ${isActive ? getCategoryColor(cat) : 'var(--border-color)'}`,
+                  padding: '0.6rem 1.25rem',
+                  borderRadius: '99px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  boxShadow: isActive ? `0 4px 15px ${getCategoryColor(cat)}44` : 'none'
+                }}
+              >
+                <CatIcon size={16} />
+                {getCategoryLabel(cat)} ({count})
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Connections Table */}
       <div className="glass-card" style={{ padding: 0, overflow: 'hidden' }}>
@@ -423,8 +501,17 @@ export default function Bills() {
 
         {loading ? (
           <p style={{ padding: '2rem', color: 'var(--text-secondary)', textAlign: 'center' }}>Loading...</p>
-        ) : bills.length === 0 ? (
-          <p style={{ padding: '3rem', color: 'var(--text-muted)', textAlign: 'center' }}>No connections yet. Add your first utility connection!</p>
+        ) : filteredBills.length === 0 ? (
+          <div style={{ padding: '3rem', textAlign: 'center' }}>
+            <FileText size={48} style={{ color: 'var(--text-muted)', margin: '0 auto 1rem' }} />
+            <h3 style={{ color: 'white', marginBottom: '0.5rem' }}>No Connections Found</h3>
+            <p style={{ color: 'var(--text-secondary)' }}>
+              {selectedCategory !== 'all' 
+                ? `No ${getCategoryLabel(selectedCategory)} connections yet. Click "Add Connection" to add one.`
+                : 'No connections yet. Add your first utility connection!'
+              }
+            </p>
+          </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -437,7 +524,7 @@ export default function Bills() {
                 </tr>
               </thead>
               <tbody>
-                {bills.map(bill => (
+                {filteredBills.map(bill => (
                   <BillRow
                     key={bill._id}
                     bill={bill}
