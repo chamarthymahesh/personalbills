@@ -19,6 +19,9 @@ services:
       - "9001:9001"
     env_file:
       - ./server/.env
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     restart: unless-stopped
 
 networks:
