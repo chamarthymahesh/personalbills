@@ -44,22 +44,34 @@ function MonthCell({ bill, month, year, payment, onSaved }) {
     if (!amount) return;
     setSaving(true);
     try {
+      let res;
       if (mode === 'add') {
-        await fetch(`/api/bills/${bill._id}/payments`, {
+        res = await fetch(`/api/bills/${bill._id}/payments`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount: parseFloat(amount), month, year, datePaid }),
+          body: JSON.stringify({ amount: parseFloat(amount), month, year, datePaid: datePaid || undefined }),
         });
       } else {
-        await fetch(`/api/bills/${bill._id}/payments/${payment._id}`, {
+        res = await fetch(`/api/bills/${bill._id}/payments/${payment._id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount: parseFloat(amount), month, year, datePaid }),
+          body: JSON.stringify({ amount: parseFloat(amount), month, year, datePaid: datePaid || undefined }),
         });
       }
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        alert(`Error: ${errorData.error || 'Failed to save payment'}`);
+        setSaving(false);
+        return;
+      }
+      
       onSaved();
       setMode(null);
-    } catch (err) { console.error(err); }
+    } catch (err) { 
+      console.error(err);
+      alert('Network error or server is down');
+    }
     setSaving(false);
   };
 

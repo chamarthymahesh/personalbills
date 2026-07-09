@@ -10,7 +10,7 @@ const BillPaymentSchema = new mongoose.Schema({
 });
 
 const UtilityBillSchema = new mongoose.Schema({
-  type: { type: String, required: true, enum: ['electricity', 'water', 'internet', 'phone', 'gas', 'other'] },
+  type: { type: String, required: true },
   name: { type: String, required: true },
   serviceNo: { type: String }, // NEW: Added service connection number
   status: { type: String, required: true, enum: ['active', 'inactive'], default: 'active' },
@@ -26,7 +26,7 @@ const InsurancePaymentSchema = new mongoose.Schema({
 });
 
 const InsuranceSchema = new mongoose.Schema({
-  type: { type: String, required: true, enum: ['term', 'health', 'car', 'life', 'property', 'other'] },
+  type: { type: String, required: true },
   provider: { type: String, required: true }, // e.g. Tata AIG
   policyName: { type: String, required: true },
   policyNumber: { type: String },
@@ -66,7 +66,7 @@ const InterestLoanSchema = new mongoose.Schema({
 const ConstructionExpenseSchema = new mongoose.Schema({
   date: { type: Date, required: true, default: Date.now },
   amount: { type: Number, required: true },
-  category: { type: String, required: true, enum: ['materials', 'labor', 'permits', 'contractor', 'transport', 'electrical', 'plumbing', 'other'] },
+  category: { type: String, required: true },
   itemDescription: { type: String, required: true },
   supplier: { type: String },
   notes: { type: String }
@@ -90,7 +90,7 @@ const DebtRepaymentSchema = new mongoose.Schema({
 const PersonalDebtSchema = new mongoose.Schema({
   type: { type: String, required: true, enum: ['given', 'taken'] }, // given = lent to friend, taken = borrowed from friend
   personName: { type: String, required: true },
-  relationship: { type: String, required: true, enum: ['friend', 'brother', 'sister', 'relative', 'colleague', 'other'] },
+  relationship: { type: String, required: true },
   amount: { type: Number, required: true },
   dateOccurred: { type: Date, required: true, default: Date.now },
   dueDate: { type: Date },
@@ -102,7 +102,7 @@ const PersonalDebtSchema = new mongoose.Schema({
 // 6. Cars Model
 const CarMaintenanceSchema = new mongoose.Schema({
   date: { type: Date, required: true, default: Date.now },
-  serviceType: { type: String, required: true, enum: ['general_service', 'repair', 'insurance_claim', 'tyre_change', 'oil_change', 'other'] },
+  serviceType: { type: String, required: true },
   cost: { type: Number, required: true },
   odometer: { type: Number },
   serviceCenter: { type: String },
