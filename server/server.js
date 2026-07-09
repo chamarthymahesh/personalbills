@@ -11,6 +11,7 @@ import {
   PersonalDebt,
   Car,
   RentalIncome,
+  Transfer,
   AdminConfig
 } from './models/Models.js';
 

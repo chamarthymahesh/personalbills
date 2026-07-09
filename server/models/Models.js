@@ -143,7 +143,18 @@ const RentalIncomeSchema = new mongoose.Schema({
   payments: [RentalPaymentSchema]
 }, { timestamps: true });
 
-// 8. Admin Configuration Model (Singleton - stores all dropdown options)
+// 8. Money Transfers Model
+const TransferSchema = new mongoose.Schema({
+  amount: { type: Number, required: true },
+  date: { type: Date, required: true, default: Date.now },
+  sentByAccount: { type: String, required: true },
+  sentToPerson: { type: String, required: true },
+  onBehalfOf: { type: String, required: true }, // e.g., Father
+  transferMethod: { type: String, required: true }, // UPI, NEFT, Cash
+  notes: { type: String }
+}, { timestamps: true });
+
+// 9. Admin Configuration Model (Singleton - stores all dropdown options)
 const AdminConfigSchema = new mongoose.Schema({
   configKey: { type: String, default: 'main', unique: true },
 
@@ -170,6 +181,10 @@ const AdminConfigSchema = new mongoose.Schema({
 
   // Building Names for Rental
   buildingNames: { type: [String], default: [] },
+
+  // Money Transfers Configuration
+  bankAccounts: { type: [String], default: ['HDFC', 'SBI', 'ICICI', 'Paytm', 'GPay', 'Cash'] },
+  transferMethods: { type: [String], default: ['UPI', 'NEFT/IMPS', 'Cash', 'Cheque', 'Other'] },
 }, { timestamps: true });
 
 export const UtilityBill = mongoose.model('UtilityBill', UtilityBillSchema);
@@ -179,4 +194,5 @@ export const ConstructionProject = mongoose.model('ConstructionProject', Constru
 export const PersonalDebt = mongoose.model('PersonalDebt', PersonalDebtSchema);
 export const Car = mongoose.model('Car', CarSchema);
 export const RentalIncome = mongoose.model('RentalIncome', RentalIncomeSchema);
+export const Transfer = mongoose.model('Transfer', TransferSchema);
 export const AdminConfig = mongoose.model('AdminConfig', AdminConfigSchema);

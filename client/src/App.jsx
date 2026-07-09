@@ -15,7 +15,8 @@ import {
   Menu,
   X,
   Settings,
-  Home
+  Home,
+  Send
 } from 'lucide-react';
 import Login from './components/Login.jsx';
 import Reports from './components/Reports.jsx';
@@ -29,6 +30,7 @@ import Construction from './components/Construction';
 import Debts from './components/Debts';
 import Cars from './components/Cars';
 import Rentals from './components/Rentals';
+import Transfers from './components/Transfers';
 import AdminSettings from './components/AdminSettings';
 
 export default function App() {
@@ -57,6 +59,7 @@ export default function App() {
       case 'debts': return <Debts />;
       case 'cars': return <Cars />;
       case 'rentals': return <Rentals />;
+      case 'transfers': return <Transfers />;
       case 'admin': return <AdminSettings />;
       case 'reports': return <Reports />;
       default: return <Landing />;
@@ -71,6 +74,7 @@ export default function App() {
     { id: 'loans', label: 'Interest Loans', icon: <Percent size={20} /> },
     { id: 'construction', label: 'Construction Sites', icon: <HardHat size={20} /> },
     { id: 'debts', label: 'Friends & Family', icon: <Users size={20} /> },
+    { id: 'transfers', label: 'Money Transfers', icon: <Send size={20} /> },
     { id: 'cars', label: 'Car Fleet Logs', icon: <Car size={20} /> },
     { id: 'rentals', label: 'Rental Income', icon: <Building size={20} /> },
     { id: 'reports', label: 'Reports', icon: <FileText size={20} /> },
