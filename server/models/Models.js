@@ -43,6 +43,24 @@ const InsuranceSchema = new mongoose.Schema({
   carName: { type: String }, // Link to car name if applicable
   notes: { type: String },
   payments: [InsurancePaymentSchema] // NEW: Tracker for individual payments
+});
+
+// Pre-save hook to set default dueDate and compute endDate if missing
+InsuranceSchema.pre('save', function (next) {
+  // this refers to the document
+  if (!this.dueDate && this.startDate) {
+    this.dueDate = this.startDate;
+  }
+  if (!this.endDate && this.startDate && this.termYears) {
+    const end = new Date(this.startDate);
+    end.setFullYear(end.getFullYear() + this.termYears);
+    this.endDate = end;
+  }
+  next();
+});
+
+// Re-declare the schema with timestamps (original line 46)
+// Insurance model exported later
 }, { timestamps: true });
 
 // 3. Interest Loans Model (Lent or Borrowed money)

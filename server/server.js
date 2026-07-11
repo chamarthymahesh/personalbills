@@ -458,6 +458,19 @@ app.delete('/api/insurances/:id', async (req, res) => {
   }
 });
 
+// Alerts for upcoming insurance payments (paid or unpaid) within next 7 days
+app.get('/api/insurances/alerts', async (req, res) => {
+  const days = parseInt(req.query.days) || 7; // default 7 days
+  const now = new Date();
+  const future = new Date();
+  future.setDate(now.getDate() + days);
+  const alerts = await Insurance.find({
+    status: 'active',
+    dueDate: { $gte: now, $lte: future }
+  }).sort({ dueDate: 1 });
+  res.json(alerts);
+});
+
 // Auto-fill past monthly payments for a policy from its start date to current month
 app.post('/api/insurances/:id/autofill', async (req, res) => {
   try {
